@@ -25,6 +25,13 @@ get_port_mappings() {
     set | grep "^PORT_" | sed 's/PORT_//; s/[=:]/ /g'
 }
 
+generate_access_rules() {
+    if [ -n "${ALLOWED_IPS:-}" ]; then
+        echo "$ALLOWED_IPS" | tr ',' ' ' | awk '{for (i=1; i<=NF; i++) if ($i != "") print "        allow " $i ";"}'
+        echo "        deny all;"
+    fi
+}
+
 generate_port_forwarding_config() {
     inport="$1"
     outhost="$2"
@@ -36,6 +43,7 @@ cat <<EOF
 
     server {
         listen $inport;
+$(generate_access_rules)
         proxy_pass backend_$inport;
     }
 EOF
